@@ -1,0 +1,50 @@
+[1.212s] Invoking command in '/home/mohit-devani/ros2_ws/src/so101_description': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/so101_description build --build-base /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build install --record /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/install.log --single-version-externally-managed install_data
+[1.570s] running egg_info
+[1.570s] creating build/so101_description/so101_description.egg-info
+[1.595s] writing build/so101_description/so101_description.egg-info/PKG-INFO
+[1.595s] writing dependency_links to build/so101_description/so101_description.egg-info/dependency_links.txt
+[1.595s] writing requirements to build/so101_description/so101_description.egg-info/requires.txt
+[1.596s] writing top-level names to build/so101_description/so101_description.egg-info/top_level.txt
+[1.596s] writing manifest file 'build/so101_description/so101_description.egg-info/SOURCES.txt'
+[1.651s] reading manifest file 'build/so101_description/so101_description.egg-info/SOURCES.txt'
+[1.652s] writing manifest file 'build/so101_description/so101_description.egg-info/SOURCES.txt'
+[1.652s] running build
+[1.652s] running build_py
+[1.653s] creating /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build
+[1.653s] creating /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build/lib
+[1.653s] creating /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build/lib/so101_description
+[1.653s] copying so101_description/__init__.py -> /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build/lib/so101_description
+[1.653s] running install
+[1.661s] running install_lib
+[1.693s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages/so101_description
+[1.693s] copying /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build/lib/so101_description/__init__.py -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages/so101_description
+[1.694s] byte-compiling /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages/so101_description/__init__.py to __init__.cpython-312.pyc
+[1.694s] running install_data
+[1.694s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/ament_index
+[1.694s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/ament_index/resource_index
+[1.694s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/ament_index/resource_index/packages
+[1.694s] copying resource/so101_description -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/ament_index/resource_index/packages
+[1.695s] copying package.xml -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description
+[1.695s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/launch
+[1.695s] copying launch/display.launch.py -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/launch
+[1.695s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/urdf
+[1.695s] copying urdf/so101_new_calib.urdf -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/urdf
+[1.695s] creating /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.696s] copying meshes/under_arm_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.697s] copying meshes/motor_holder_so101_wrist_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.698s] copying meshes/waveshare_mounting_plate_so101_v2.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.698s] copying meshes/base_motor_holder_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.699s] copying meshes/upper_arm_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.700s] copying meshes/wrist_roll_follower_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.701s] copying meshes/moving_jaw_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.702s] copying meshes/sts3215_03a_no_horn_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.703s] copying meshes/base_so101_v2.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.703s] copying meshes/motor_holder_so101_base_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.704s] copying meshes/rotation_pitch_so101_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.704s] copying meshes/sts3215_03a_v1.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.705s] copying meshes/wrist_roll_pitch_so101_v2.stl -> /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/share/so101_description/meshes
+[1.706s] running install_egg_info
+[1.738s] Copying build/so101_description/so101_description.egg-info to /home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages/so101_description-0.0.0-py3.12.egg-info
+[1.739s] running install_scripts
+[1.910s] writing list of installed files to '/home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/install.log'
+[1.944s] Invoked command in '/home/mohit-devani/ros2_ws/src/so101_description' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/mohit-devani/ros2_ws/src/so101_description/install/so101_description/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/so101_description build --build-base /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/build install --record /home/mohit-devani/ros2_ws/src/so101_description/build/so101_description/install.log --single-version-externally-managed install_data
