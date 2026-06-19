@@ -1,0 +1,25 @@
+# ROS2
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+
+# YOLO
+*.pt
+
+# Generated files
+*.pdf
+*.gv
+
+# VS Code
+.vscode/
+
+# Large cloned repositories
+src/SO-ARM100/
+
+# ROS camera cache
+*.db3
+*.yaml
