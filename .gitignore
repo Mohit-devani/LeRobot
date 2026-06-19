@@ -1,25 +1,40 @@
-# ROS2
+# # ROS2
+# build/
+# install/
+# log/
+
+# # Python
+# __pycache__/
+# *.pyc
+
+# # YOLO
+# *.pt
+
+# # Generated files
+# *.pdf
+# *.gv
+
+# # VS Code
+# .vscode/
+
+# # Large cloned repositories
+# src/SO-ARM100/
+
+# # ROS camera cache
+# *.db3
+# *.yaml
+
+
 build/
 install/
 log/
 
-# Python
-__pycache__/
 *.pyc
+__pycache__/
 
-# YOLO
-*.pt
-
-# Generated files
-*.pdf
-*.gv
-
-# VS Code
 .vscode/
 
-# Large cloned repositories
-src/SO-ARM100/
+frames_*.pdf
+frames_*.gv
 
-# ROS camera cache
-*.db3
-*.yaml
+yolov8n.pt
