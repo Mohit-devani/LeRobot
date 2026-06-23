@@ -4,14 +4,14 @@ ROS 2 Jazzy robotics learning project.
 
 ## Completed Milestones
 
-### Milestone 1
+### Milestone 1: SO101 Robot Visualization
 
 * ROS 2 Jazzy installation
 * Workspace creation
 * SO101 robot description package
 * Robot visualization in RViz
 
-### Milestone 2
+### Milestone 2: Camera + YOLO Object Detection
 
 * USB camera integration
 * ROS image topic subscription
@@ -27,19 +27,37 @@ Objects currently detected:
 * Laptop
 * Other YOLOv8 supported classes
 
+### Milestone 3: SO101 Gazebo Pick-and-Place with Wrist Camera
+
+* SO101 arm spawned in Gazebo
+* ROS 2 controllers active
+* Gripper controller working
+* 2 cm cube spawned and stable
+* Virtual cube attach/release system working
+* Automatic pick-place sequence working
+* One-command full pick-place demo working
+* Wrist camera mounted near gripper
+* Gazebo wrist camera topic publishing
+* ROS 2 camera bridge working
+* Wrist camera image visible in `rqt_image_view`
+* Full pick-place demo works while wrist camera streams
+
 ## Workspace Structure
 
 ```text
 ros2_ws/
 ├── src/
 │   ├── camera_vision/
-│   └── so101_description/
+│   ├── so101_description/
+│   ├── so101_gazebo/
+│   └── so101_moveit_config/
 ```
 
 ## Requirements
 
 * Ubuntu 24.04
 * ROS 2 Jazzy
+* Gazebo Sim
 * Python 3.12
 * OpenCV 4.8.1
 * Ultralytics YOLOv8
@@ -59,13 +77,55 @@ source ~/ai_projects/yolo_env/bin/activate
 python ~/ros2_ws/src/camera_vision/camera_vision/camera_viewer.py
 ```
 
+## Running SO101 Gazebo Pick-and-Place with Wrist Camera
+
+Terminal 1:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_gazebo full_auto_pick_place_with_camera.launch.py
+```
+
+Terminal 2, to view wrist camera:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 run rqt_image_view rqt_image_view /wrist_camera/image
+```
+
+## Important ROS Topics
+
+```text
+/wrist_camera/image
+/wrist_camera/camera_info
+/pick_place_state
+/joint_states
+/arm_controller/follow_joint_trajectory
+/gripper_controller/follow_joint_trajectory
+```
+
+## Current Working Safe Poses
+
+```text
+pick_pose  = [0.0, -0.5, 0.5, -0.3, 0.0]
+place_pose = [0.6, -0.5, 0.5, -0.3, 0.0]
+home       = [0.0, 0.0, 0.0, 0.0, 0.0]
+```
+
 ## Current Status
 
-Real-time object detection working successfully.
+Working:
+
+* Real-time YOLO camera detection
+* SO101 Gazebo automatic pick-place
+* Wrist camera image streaming from Gazebo to ROS 2
 
 Next goal:
 
-* Publish detections as ROS topics
-* Build robot perception pipeline
-* Integrate vision with robot behavior
-
+* Detect cube from wrist camera image
+* Publish detected object center as a ROS 2 topic
+* Later convert image pixel + depth into 3D robot coordinates

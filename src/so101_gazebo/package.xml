@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>so101_gazebo</name>
+  <version>0.0.0</version>
+  <description>SO101 Gazebo simulation package</description>
+
+  <maintainer email="robotics7202@gmail.com">mohit-devani</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>ros_gz_interfaces</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_sim</depend>
+
+  <depend>sensor_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
