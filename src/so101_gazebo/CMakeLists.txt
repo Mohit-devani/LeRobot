@@ -20,6 +20,8 @@ install(PROGRAMS
   scripts/visual_servo_error.py
   scripts/visual_servo_pan_controller.py
   scripts/visual_servo_wrist_controller.py
+  scripts/visual_servo_centering_sequence.py
+  scripts/center_then_pick_sequence.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
