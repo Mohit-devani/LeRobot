@@ -17,6 +17,7 @@ install(PROGRAMS
   scripts/gazebo_pick_place_sequence.py
   scripts/wrist_color_detector.py
   scripts/wrist_vision_test_setup.py
+  scripts/visual_servo_error.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

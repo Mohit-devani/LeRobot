@@ -54,6 +54,13 @@ def generate_launch_description():
         output="screen"
     )
 
+    visual_servo_error = Node(
+        package="so101_gazebo",
+        executable="visual_servo_error.py",
+        name="visual_servo_error",
+        output="screen"
+    )
+
     return LaunchDescription([
         spawn_gazebo,
 
@@ -75,5 +82,10 @@ def generate_launch_description():
         TimerAction(
             period=16.0,
             actions=[color_detector]
+        ),
+
+        TimerAction(
+            period=18.0,
+            actions=[visual_servo_error]
         ),
     ])
