@@ -129,3 +129,31 @@ Next goal:
 * Detect cube from wrist camera image
 * Publish detected object center as a ROS 2 topic
 * Later convert image pixel + depth into 3D robot coordinates
+
+
+---
+
+## Final Gazebo V1 Demo: Camera-Centered Pick and Place
+
+This launch runs the complete Gazebo simulation pipeline:
+
+- Spawn SO101 robot
+- Start controllers
+- Start wrist camera bridge
+- Move cube into wrist camera view
+- Detect red cube using OpenCV color detection
+- Compute visual servo error
+- Center cube in camera view using shoulder pan and wrist flex
+- Trigger automatic pick-place after centering
+- Attach cube virtually
+- Move cube to place pose
+- Release cube
+- Finish sequence
+
+Run:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_gazebo vision_center_then_pick.launch.py
