@@ -157,3 +157,44 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_gazebo vision_center_then_pick.launch.py
+
+
+from pathlib import Path
+
+path = Path("README.md")
+text = path.read_text()
+
+marker = "\n---\n\n## Final Gazebo V1 Demo: Camera-Centered Pick and Place"
+
+if marker not in text:
+    print("ERROR: Final Gazebo V1 marker not found. Stop.")
+    raise SystemExit(1)
+
+before = text.split(marker)[0].rstrip()
+
+final_section = r"""
+---
+
+## Final Gazebo V1 Demo: Camera-Centered Pick and Place
+
+This is the final working Gazebo V1 pipeline.
+
+It runs:
+
+- SO101 robot in Gazebo
+- ROS 2 controllers
+- Wrist camera bridge
+- Red cube detection using OpenCV
+- Visual servo centering using camera feedback
+- Automatic pick-place after centering
+- Virtual cube attach and release
+- Final fast pick-place sequence
+
+Run:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_gazebo final_so101_gazebo_pick_place.launch.py
+```
