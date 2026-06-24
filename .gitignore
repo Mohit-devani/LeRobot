@@ -32,3 +32,5 @@ frames_*.pdf
 
 # Large external cloned repositories
 src/SO-ARM100/
+_root_package_backup/
+README_backup_before_gazebo_v1.md
