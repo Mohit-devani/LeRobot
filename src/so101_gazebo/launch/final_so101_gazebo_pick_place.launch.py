@@ -42,8 +42,8 @@ def generate_launch_description():
 
     vision_setup = Node(
         package="so101_gazebo",
-        executable="wrist_vision_test_setup.py",
-        name="wrist_vision_test_setup",
+        executable="gazebo_v1_demo_setup.py",
+        name="gazebo_v1_demo_setup",
         output="screen"
     )
 
