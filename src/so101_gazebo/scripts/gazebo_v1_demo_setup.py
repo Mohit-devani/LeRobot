@@ -8,7 +8,6 @@ from rclpy.action import ActionClient
 
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
-from ros_gz_interfaces.srv import SetEntityPose
 
 
 class GazeboV1DemoSetup(Node):
@@ -22,11 +21,6 @@ class GazeboV1DemoSetup(Node):
             "/arm_controller/follow_joint_trajectory"
         )
 
-        self.set_pose_client = self.create_client(
-            SetEntityPose,
-            "/world/so101_world/set_pose"
-        )
-
         self.arm_joints = [
             "shoulder_pan",
             "shoulder_lift",
@@ -35,12 +29,8 @@ class GazeboV1DemoSetup(Node):
             "wrist_roll"
         ]
 
+        # Camera-ready pose for wrist-camera cube detection.
         self.camera_pose = [0.0, -0.5, 0.5, -0.3, 0.0]
-
-        # Demo cube start pose for wrist-camera detection.
-        self.visible_cube_x = 0.28
-        self.visible_cube_y = 0.03
-        self.visible_cube_z = 0.350
 
     def move_arm(self, positions, duration=4):
         self.get_logger().info(f"Moving arm to camera pose: {positions}")
@@ -78,52 +68,12 @@ class GazeboV1DemoSetup(Node):
         self.get_logger().error(f"Arm goal failed: {result.error_string}")
         return False
 
-    def move_cube_to_camera_view(self):
-        self.get_logger().info("Waiting for /world/so101_world/set_pose service")
-
-        while not self.set_pose_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Still waiting for set_pose service...")
-
-        req = SetEntityPose.Request()
-
-        req.entity.name = "pick_cube"
-        req.entity.type = 2
-
-        req.pose.position.x = self.visible_cube_x
-        req.pose.position.y = self.visible_cube_y
-        req.pose.position.z = self.visible_cube_z
-
-        req.pose.orientation.x = 0.0
-        req.pose.orientation.y = 0.0
-        req.pose.orientation.z = 0.0
-        req.pose.orientation.w = 1.0
-
-        self.get_logger().info(
-            f"Moving pick_cube to x={self.visible_cube_x}, y={self.visible_cube_y}, z={self.visible_cube_z}"
-        )
-
-        future = self.set_pose_client.call_async(req)
-        rclpy.spin_until_future_complete(self, future)
-
-        response = future.result()
-
-        if response is not None and response.success:
-            self.get_logger().info("Cube moved to Gazebo V1 demo start pose")
-            return True
-
-        self.get_logger().error("Failed to move cube")
-        return False
-
     def run(self):
         self.get_logger().info("Gazebo V1 demo setup started")
 
         time.sleep(2.0)
 
         self.move_arm(self.camera_pose, duration=4)
-
-        time.sleep(1.0)
-
-        self.move_cube_to_camera_view()
 
         self.get_logger().info("Gazebo V1 demo setup complete")
 
