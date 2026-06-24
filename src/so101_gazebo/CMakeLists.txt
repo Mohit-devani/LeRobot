@@ -18,6 +18,8 @@ install(PROGRAMS
   scripts/wrist_color_detector.py
   scripts/wrist_vision_test_setup.py
   scripts/visual_servo_error.py
+  scripts/visual_servo_pan_controller.py
+  scripts/visual_servo_wrist_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
