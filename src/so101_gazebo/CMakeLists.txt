@@ -15,6 +15,8 @@ install(PROGRAMS
   scripts/gazebo_cube_attach.py
   scripts/simple_gripper_tf.py
   scripts/gazebo_pick_place_sequence.py
+  scripts/wrist_color_detector.py
+  scripts/wrist_vision_test_setup.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

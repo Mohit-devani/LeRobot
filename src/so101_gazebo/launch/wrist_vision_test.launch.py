@@ -30,14 +30,21 @@ def generate_launch_description():
         )
     )
 
-    cube_attach = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                gazebo_pkg,
-                "launch",
-                "cube_attach.launch.py"
-            )
-        )
+    set_pose_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="vision_set_pose_bridge",
+        output="screen",
+        arguments=[
+            "/world/so101_world/set_pose@ros_gz_interfaces/srv/SetEntityPose"
+        ]
+    )
+
+    vision_setup = Node(
+        package="so101_gazebo",
+        executable="wrist_vision_test_setup.py",
+        name="wrist_vision_test_setup",
+        output="screen"
     )
 
     color_detector = Node(
@@ -47,37 +54,26 @@ def generate_launch_description():
         output="screen"
     )
 
-    auto_pick_place = Node(
-        package="so101_gazebo",
-        executable="gazebo_pick_place_sequence.py",
-        name="gazebo_pick_place_sequence",
-        output="screen"
-    )
-
     return LaunchDescription([
         spawn_gazebo,
 
-        # Camera bridge after Gazebo camera topic exists
         TimerAction(
             period=7.0,
             actions=[camera_bridge]
         ),
 
-        # Color detector after image bridge is alive
         TimerAction(
-            period=10.0,
-            actions=[color_detector]
+            period=8.0,
+            actions=[set_pose_bridge]
         ),
 
-        # Attach system after robot/controllers exist
         TimerAction(
             period=11.0,
-            actions=[cube_attach]
+            actions=[vision_setup]
         ),
 
-        # Auto pick-place after everything is alive
         TimerAction(
-            period=18.0,
-            actions=[auto_pick_place]
+            period=16.0,
+            actions=[color_detector]
         ),
     ])
