@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import threading
 
 import rclpy
 from rclpy.node import Node
@@ -19,10 +20,12 @@ class CenterThenPickSequence(Node):
 
         self.centered = False
         self.started_pick = False
+        self.pick_thread = None
 
         self.object_detected = False
         self.latest_error = None
 
+        # Safety gate tolerance after visual centering.
         self.grasp_error_tolerance_x = 60.0
         self.grasp_error_tolerance_y = 60.0
 
@@ -74,7 +77,6 @@ class CenterThenPickSequence(Node):
         ]
 
         self.place_pose = [0.85, -0.45, 0.45, -0.45, 0.0]
-        self.after_release_pose = [-0.85, -0.45, 0.45, -0.45, 0.0]
         self.home = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         self.gripper_open = [1.2]
@@ -88,6 +90,34 @@ class CenterThenPickSequence(Node):
 
     def visual_error_callback(self, msg):
         self.latest_error = msg
+
+    def center_done_callback(self, msg):
+        if msg.data and not self.started_pick:
+            self.centered = True
+            self.started_pick = True
+
+            self.get_logger().info("CENTERING DONE received. Starting pick-place.")
+
+            # Important:
+            # Run long pick-place sequence outside subscriber callback.
+            self.pick_thread = threading.Thread(
+                target=self.run_pick_place,
+                daemon=True
+            )
+            self.pick_thread.start()
+
+    def wait_for_future(self, future, timeout_sec=20.0):
+        start_time = time.time()
+
+        while rclpy.ok() and not future.done():
+            if timeout_sec is not None:
+                if time.time() - start_time > timeout_sec:
+                    self.get_logger().error("Future wait timed out")
+                    return False
+
+            time.sleep(0.02)
+
+        return True
 
     def is_grasp_safe(self):
         if not self.object_detected:
@@ -116,14 +146,7 @@ class CenterThenPickSequence(Node):
         self.get_logger().info("GRASP CHECK PASSED")
         return True
 
-    def center_done_callback(self, msg):
-        if msg.data and not self.started_pick:
-            self.centered = True
-            self.started_pick = True
-            self.get_logger().info("CENTERING DONE received. Starting pick-place.")
-            self.run_pick_place()
-
-    def send_arm_goal(self, positions, duration=1):
+    def send_arm_goal(self, positions, duration=3):
         self.get_logger().info(f"ARM GOAL: {positions}")
 
         goal_msg = FollowJointTrajectory.Goal()
@@ -139,7 +162,9 @@ class CenterThenPickSequence(Node):
         self.arm_client.wait_for_server()
 
         future = self.arm_client.send_goal_async(goal_msg)
-        rclpy.spin_until_future_complete(self, future)
+
+        if not self.wait_for_future(future, timeout_sec=10.0):
+            return False
 
         goal_handle = future.result()
 
@@ -148,7 +173,9 @@ class CenterThenPickSequence(Node):
             return False
 
         result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(self, result_future)
+
+        if not self.wait_for_future(result_future, timeout_sec=duration + 10.0):
+            return False
 
         result = result_future.result().result
 
@@ -175,7 +202,9 @@ class CenterThenPickSequence(Node):
         self.gripper_client.wait_for_server()
 
         future = self.gripper_client.send_goal_async(goal_msg)
-        rclpy.spin_until_future_complete(self, future)
+
+        if not self.wait_for_future(future, timeout_sec=10.0):
+            return False
 
         goal_handle = future.result()
 
@@ -184,7 +213,9 @@ class CenterThenPickSequence(Node):
             return False
 
         result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(self, result_future)
+
+        if not self.wait_for_future(result_future, timeout_sec=duration + 10.0):
+            return False
 
         result = result_future.result().result
 
@@ -208,45 +239,45 @@ class CenterThenPickSequence(Node):
     def run_pick_place(self):
         self.get_logger().info("CAMERA-CENTERED PICK-PLACE STARTED")
 
-        # Give visual servo and TF a moment to settle.
+        # Let final visual error settle.
         time.sleep(0.3)
 
         # Safety gate before grasp.
-        # Do not close blindly if the object is not detected or not centered.
         if not self.is_grasp_safe():
             self.get_logger().error("CAMERA-CENTERED PICK-PLACE ABORTED: unsafe grasp")
             return
 
         # Open gripper before grasp.
-        self.send_gripper_goal(self.gripper_open, duration=1)
+        if not self.send_gripper_goal(self.gripper_open, duration=1):
+            return
         time.sleep(0.2)
 
         # Close gripper.
-        self.send_gripper_goal(self.gripper_close, duration=1)
+        if not self.send_gripper_goal(self.gripper_close, duration=1):
+            return
         time.sleep(0.2)
 
-        # Attach cube to gripper virtually.
+        # Attach cube virtually.
         self.publish_state("GRIP_CLOSE")
         time.sleep(0.8)
 
         # Move attached cube to place side.
-        self.send_arm_goal(self.place_pose, duration=3)
+        if not self.send_arm_goal(self.place_pose, duration=3):
+            return
         time.sleep(0.3)
 
-        # IMPORTANT:
-        # Release virtual attach BEFORE opening the gripper.
-        # If we open while the cube is still attached near the fingers,
-        # the gripper can collide with the cube and get stuck.
+        # Release virtual attach.
         self.publish_state("GRIP_OPEN")
         time.sleep(0.3)
 
         # Move home while gripper is still closed.
-        # This avoids opening the fingers near the released cube.
-        self.send_arm_goal(self.home, duration=3)
+        if not self.send_arm_goal(self.home, duration=3):
+            return
         time.sleep(0.3)
 
-        # Now open gripper safely at home, far from the cube.
-        self.send_gripper_goal(self.gripper_open, duration=1)
+        # Open gripper safely at home.
+        if not self.send_gripper_goal(self.gripper_open, duration=1):
+            return
         time.sleep(0.2)
 
         self.get_logger().info("CAMERA-CENTERED PICK-PLACE COMPLETE")
