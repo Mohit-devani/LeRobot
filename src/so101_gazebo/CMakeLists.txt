@@ -23,6 +23,7 @@ install(PROGRAMS
   scripts/visual_servo_centering_sequence.py
   scripts/center_then_pick_sequence.py
     scripts/gazebo_v1_demo_setup.py
+  scripts/ground_cube_camera_search.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
