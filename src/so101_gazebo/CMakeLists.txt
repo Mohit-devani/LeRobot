@@ -24,6 +24,7 @@ install(PROGRAMS
   scripts/center_then_pick_sequence.py
     scripts/gazebo_v1_demo_setup.py
   scripts/ground_cube_camera_search.py
+  scripts/ground_cube_alignment_check.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
