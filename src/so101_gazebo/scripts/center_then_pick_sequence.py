@@ -7,6 +7,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 from std_msgs.msg import Bool, String
+from geometry_msgs.msg import Point
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 
@@ -19,10 +20,30 @@ class CenterThenPickSequence(Node):
         self.centered = False
         self.started_pick = False
 
+        self.object_detected = False
+        self.latest_error = None
+
+        self.grasp_error_tolerance_x = 60.0
+        self.grasp_error_tolerance_y = 60.0
+
         self.done_sub = self.create_subscription(
             Bool,
             "/visual_servo_sequence_done",
             self.center_done_callback,
+            10
+        )
+
+        self.object_sub = self.create_subscription(
+            Bool,
+            "/object_detected",
+            self.object_detected_callback,
+            10
+        )
+
+        self.error_sub = self.create_subscription(
+            Point,
+            "/visual_servo_error",
+            self.visual_error_callback,
             10
         )
 
@@ -61,6 +82,39 @@ class CenterThenPickSequence(Node):
 
         self.get_logger().info("Center-then-pick sequence started")
         self.get_logger().info("Waiting for /visual_servo_sequence_done == true")
+
+    def object_detected_callback(self, msg):
+        self.object_detected = msg.data
+
+    def visual_error_callback(self, msg):
+        self.latest_error = msg
+
+    def is_grasp_safe(self):
+        if not self.object_detected:
+            self.get_logger().warn("GRASP BLOCKED: object_detected is false")
+            return False
+
+        if self.latest_error is None:
+            self.get_logger().warn("GRASP BLOCKED: no visual_servo_error received")
+            return False
+
+        error_x = abs(self.latest_error.x)
+        error_y = abs(self.latest_error.y)
+
+        self.get_logger().info(
+            f"GRASP CHECK: error_x={error_x:.1f}, error_y={error_y:.1f}"
+        )
+
+        if error_x > self.grasp_error_tolerance_x:
+            self.get_logger().warn("GRASP BLOCKED: x error too large")
+            return False
+
+        if error_y > self.grasp_error_tolerance_y:
+            self.get_logger().warn("GRASP BLOCKED: y error too large")
+            return False
+
+        self.get_logger().info("GRASP CHECK PASSED")
+        return True
 
     def center_done_callback(self, msg):
         if msg.data and not self.started_pick:
@@ -156,6 +210,12 @@ class CenterThenPickSequence(Node):
 
         # Give visual servo and TF a moment to settle.
         time.sleep(0.3)
+
+        # Safety gate before grasp.
+        # Do not close blindly if the object is not detected or not centered.
+        if not self.is_grasp_safe():
+            self.get_logger().error("CAMERA-CENTERED PICK-PLACE ABORTED: unsafe grasp")
+            return
 
         # Open gripper before grasp.
         self.send_gripper_goal(self.gripper_open, duration=1)
