@@ -25,16 +25,10 @@ install(PROGRAMS
     scripts/gazebo_v1_demo_setup.py
   scripts/ground_cube_camera_search.py
   scripts/ground_cube_alignment_check.py
-  scripts/ground_cube_pick_sequence.py
-  scripts/ground_cube_ready_pose.py
-  scripts/wrist_roll_calibration.py
-  scripts/gazebo_cube_pose_publisher.py
   scripts/ground_pose_pick_sequence.py
-  scripts/dynamic_gazebo_cube_pose_publisher.py
-  scripts/gripper_cube_distance_monitor.py
-  scripts/ground_grasp_pose_scan.py
   scripts/wrist_cube_center_detector.py
   scripts/gazebo_cube_dynamic_attach.py
+  scripts/dynamic_gazebo_cube_pose_publisher.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
