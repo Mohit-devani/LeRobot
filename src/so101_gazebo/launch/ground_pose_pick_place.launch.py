@@ -97,22 +97,22 @@ def generate_launch_description():
         spawn_ground_cube,
 
         # Core Gazebo services.
-        TimerAction(period=7.0, actions=[set_pose_bridge]),
-        TimerAction(period=8.0, actions=[simple_gripper_tf, dynamic_cube_attach]),
-        TimerAction(period=9.0, actions=[pose_info_bridge]),
+        TimerAction(period=6.0, actions=[set_pose_bridge]),
+        TimerAction(period=7.0, actions=[simple_gripper_tf, dynamic_cube_attach]),
+        TimerAction(period=8.0, actions=[pose_info_bridge]),
 
         # Camera bridge.
-        TimerAction(period=10.0, actions=[camera_bridge]),
+        TimerAction(period=9.0, actions=[camera_bridge]),
 
         # Publish live cube pose from Gazebo.
-        TimerAction(period=12.0, actions=[cube_pose_pub]),
+        TimerAction(period=10.0, actions=[cube_pose_pub]),
 
         # Move to camera-search pose first.
-        TimerAction(period=13.0, actions=[camera_search]),
+        TimerAction(period=11.0, actions=[camera_search]),
 
         # Start detector after camera-search pose has enough time to finish.
-        TimerAction(period=28.0, actions=[color_detector]),
+        TimerAction(period=24.0, actions=[color_detector]),
 
         # Start pick sequence after detector has stable cube visibility.
-        TimerAction(period=32.0, actions=[ground_pose_pick]),
+        TimerAction(period=28.0, actions=[ground_pose_pick]),
     ])

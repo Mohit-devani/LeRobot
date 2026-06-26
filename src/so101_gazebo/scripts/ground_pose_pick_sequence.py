@@ -159,8 +159,9 @@ class GroundPosePickSequence(Node):
 
         point = JointTrajectoryPoint()
         point.positions = positions
-        point.time_from_start.sec = duration
-        point.time_from_start.nanosec = 0
+        duration_sec = float(duration)
+        point.time_from_start.sec = int(duration_sec)
+        point.time_from_start.nanosec = int((duration_sec - int(duration_sec)) * 1_000_000_000)
 
         goal_msg.trajectory.points.append(point)
 
@@ -199,8 +200,9 @@ class GroundPosePickSequence(Node):
 
         point = JointTrajectoryPoint()
         point.positions = positions
-        point.time_from_start.sec = duration
-        point.time_from_start.nanosec = 0
+        duration_sec = float(duration)
+        point.time_from_start.sec = int(duration_sec)
+        point.time_from_start.nanosec = int((duration_sec - int(duration_sec)) * 1_000_000_000)
 
         goal_msg.trajectory.points.append(point)
 
@@ -311,7 +313,7 @@ class GroundPosePickSequence(Node):
 
             align_pose = [pan, -0.35, 0.70, 0.60, 0.0]
 
-            if not self.send_arm_goal(align_pose, duration=1):
+            if not self.send_arm_goal(align_pose, duration=0.25):
                 self.get_logger().error("CAMERA PRE-ALIGNMENT ARM GOAL FAILED")
                 return False
 
@@ -346,25 +348,25 @@ class GroundPosePickSequence(Node):
         retreat_pose   = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         # 1. Open gripper.
-        if not self.send_gripper_goal(self.gripper_open, duration=1):
+        if not self.send_gripper_goal(self.gripper_open, duration=0.3):
             return
 
         time.sleep(0.5)
 
         # 2. Move near cube.
-        if not self.send_arm_goal(pre_grasp_pose, duration=3):
+        if not self.send_arm_goal(pre_grasp_pose, duration=0.8):
             return
 
         time.sleep(0.5)
 
         # 3. Move to tuned grasp pose.
-        if not self.send_arm_goal(grasp_pose, duration=3):
+        if not self.send_arm_goal(grasp_pose, duration=0.8):
             return
 
         time.sleep(0.5)
 
         # 4. Close gripper.
-        if not self.send_gripper_goal(self.gripper_close, duration=1):
+        if not self.send_gripper_goal(self.gripper_close, duration=0.3):
             return
 
         time.sleep(0.5)
@@ -379,13 +381,13 @@ class GroundPosePickSequence(Node):
         time.sleep(1.0)
 
         # 7. Lift.
-        if not self.send_arm_goal(lift_pose, duration=3):
+        if not self.send_arm_goal(lift_pose, duration=0.8):
             return
 
         time.sleep(0.5)
 
         # 8. Move to place.
-        if not self.send_arm_goal(place_pose, duration=4):
+        if not self.send_arm_goal(place_pose, duration=1.0):
             return
 
         time.sleep(0.5)
@@ -395,13 +397,13 @@ class GroundPosePickSequence(Node):
         time.sleep(0.5)
 
         # 10. Retreat.
-        if not self.send_arm_goal(retreat_pose, duration=4):
+        if not self.send_arm_goal(retreat_pose, duration=1.0):
             return
 
         time.sleep(0.5)
 
         # 11. Open gripper safely after retreat.
-        if not self.send_gripper_goal(self.gripper_open, duration=1):
+        if not self.send_gripper_goal(self.gripper_open, duration=0.3):
             return
 
         self.get_logger().info("GROUND POSE PICK-PLACE COMPLETE")
