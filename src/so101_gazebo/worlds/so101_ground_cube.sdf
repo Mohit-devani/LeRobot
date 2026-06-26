@@ -45,7 +45,7 @@
   
     <model name="pick_cube">
       <static>true</static>
-      <pose>0.32 0.00 0.020 0 0 0</pose>
+      <pose>0.32 0.10 0.020 0 0 0</pose>
 
       <link name="link">
         <inertial>

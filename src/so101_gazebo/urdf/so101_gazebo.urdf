@@ -307,7 +307,7 @@
 
   <joint name="gripper_frame_joint" type="fixed">
     <origin xyz="-0.0079 -0.000218121 -0.0981274" rpy="0 3.14159 0"/>
-    <parent link="gripper_link"/>
+    <parent link="wrist_link"/>
     <child link="gripper_frame_link"/>
     <axis xyz="0 0 0"/>
   </joint>
@@ -484,9 +484,9 @@
   </link>
 
   <joint name="gripper_to_wrist_camera" type="fixed">
-    <parent link="gripper_link"/>
+    <parent link="wrist_link"/>
     <child link="wrist_camera_link"/>
-    <origin xyz="0.055 0.0 0.020" rpy="0 1.5708 0"/>
+    <origin xyz="-0.0549 -0.0411 0.0154" rpy="1.6195 0 -1.5708"/>
   </joint>
 
   <gazebo reference="wrist_camera_link">
