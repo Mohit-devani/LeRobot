@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import time
+
 import cv2
 import rclpy
 from rclpy.node import Node
@@ -46,6 +48,7 @@ class WristCubeCenterDetector(Node):
         self.target_y = 370.0
 
         self.min_area = 100.0
+        self.last_log_time = 0.0
 
         self.get_logger().info("Wrist cube center detector started")
         self.get_logger().info("Publishing /object_detected, /camera_cube_center, /camera_cube_error")
@@ -130,11 +133,14 @@ class WristCubeCenterDetector(Node):
         error_msg.point.z = area
         self.error_pub.publish(error_msg)
 
-        self.get_logger().info(
-            f"CAMERA CUBE CENTER: cx={cx:.1f}, cy={cy:.1f}, "
-            f"error_x={error_msg.point.x:.1f}, error_y={error_msg.point.y:.1f}, "
-            f"area={area:.1f}"
-        )
+        now = time.monotonic()
+        if now - self.last_log_time > 2.0:
+            self.last_log_time = now
+            self.get_logger().info(
+                f"CAMERA CUBE CENTER: cx={cx:.1f}, cy={cy:.1f}, "
+                f"error_x={error_msg.point.x:.1f}, error_y={error_msg.point.y:.1f}, "
+                f"area={area:.1f}"
+            )
 
         cv2.rectangle(bgr, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.circle(bgr, (int(cx), int(cy)), 5, (255, 0, 0), -1)

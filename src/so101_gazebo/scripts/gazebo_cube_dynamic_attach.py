@@ -58,7 +58,8 @@ class GazeboCubeDynamicAttach(Node):
         self.offset_y = 0.0
         self.offset_z = 0.0
 
-        self.last_print_time = 0.0
+        self.lift_started_logged = False
+        self.lift_complete_logged = False
 
         self.timer = self.create_timer(0.15, self.update_attached_cube)
 
@@ -75,14 +76,15 @@ class GazeboCubeDynamicAttach(Node):
                 self.lock_attach_offset()
                 self.attach_mode = True
                 self.attach_start_time = time.monotonic()
-                self.get_logger().info("DYNAMIC ATTACH MODE ON")
+                self.lift_started_logged = False
+                self.lift_complete_logged = False
+                self.get_logger().info("CUBE ATTACHED")
 
         elif state == "GRIP_OPEN":
             if self.attach_mode:
                 self.release_to_ground()
                 self.attach_mode = False
                 self.attach_start_time = None
-                self.get_logger().info("DYNAMIC ATTACH MODE OFF")
 
     def get_gripper_pose(self):
         try:
@@ -153,13 +155,13 @@ class GazeboCubeDynamicAttach(Node):
         self.cube_y = cube_y
         self.cube_z = cube_z
 
-        now = time.monotonic()
-        if now - self.last_print_time > 0.8:
-            self.last_print_time = now
-            self.get_logger().info(
-                f"CARRY/LIFT ATTACH: elapsed={elapsed:.2f}s | "
-                f"raw_z={raw_z:.3f}, target_z={target_z:.3f}, final_z={cube_z:.3f}"
-            )
+        if elapsed >= self.lift_delay_sec and not self.lift_started_logged:
+            self.lift_started_logged = True
+            self.get_logger().info("CUBE LIFT STARTED")
+
+        if target_z >= self.carry_z - 0.001 and not self.lift_complete_logged:
+            self.lift_complete_logged = True
+            self.get_logger().info(f"CUBE LIFTED: z={cube_z:.3f}")
 
         self.call_set_pose(cube_x, cube_y, cube_z)
 
@@ -167,7 +169,7 @@ class GazeboCubeDynamicAttach(Node):
         self.cube_z = self.ground_z
         self.call_set_pose(self.cube_x, self.cube_y, self.cube_z)
         self.get_logger().info(
-            f"DYNAMIC RELEASE TO GROUND: cube x={self.cube_x:.3f}, "
+            f"CUBE RELEASED TO GROUND: cube x={self.cube_x:.3f}, "
             f"y={self.cube_y:.3f}, z={self.cube_z:.3f}"
         )
 
