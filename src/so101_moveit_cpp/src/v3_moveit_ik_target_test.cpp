@@ -1,8 +1,19 @@
 #include <memory>
 #include <thread>
+#include <vector>
+#include <string>
 
 #include <rclcpp/rclcpp.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
+
+
+struct Target
+{
+  double dx;
+  double dy;
+  double dz;
+  std::string name;
+};
 
 
 int main(int argc, char * argv[])
@@ -27,12 +38,12 @@ int main(int argc, char * argv[])
   arm.setPoseReferenceFrame("base_link");
   arm.setPlanningTime(8.0);
   arm.setNumPlanningAttempts(20);
-  arm.setMaxVelocityScalingFactor(0.15);
-  arm.setMaxAccelerationScalingFactor(0.15);
-  arm.setGoalPositionTolerance(0.05);
-  arm.setGoalOrientationTolerance(0.50);
+  arm.setMaxVelocityScalingFactor(0.10);
+  arm.setMaxAccelerationScalingFactor(0.10);
+  arm.setGoalPositionTolerance(0.03);
+  arm.setGoalOrientationTolerance(0.30);
 
-  RCLCPP_INFO(node->get_logger(), "V3 IK DIAGNOSTIC STARTED");
+  RCLCPP_INFO(node->get_logger(), "V3 SMALL IK MOVEMENT TEST STARTED");
   RCLCPP_INFO(node->get_logger(), "Planning frame: %s", arm.getPlanningFrame().c_str());
   RCLCPP_INFO(node->get_logger(), "Pose reference frame: %s", arm.getPoseReferenceFrame().c_str());
   RCLCPP_INFO(node->get_logger(), "End effector link: %s", arm.getEndEffectorLink().c_str());
@@ -40,59 +51,84 @@ int main(int argc, char * argv[])
   arm.setStartStateToCurrentState();
 
   auto current_pose_stamped = arm.getCurrentPose("gripper_frame_link");
-  auto current_pose = current_pose_stamped.pose;
+  auto target_pose = current_pose_stamped.pose;
 
   RCLCPP_INFO(
     node->get_logger(),
     "Current pose frame=%s x=%.3f y=%.3f z=%.3f",
     current_pose_stamped.header.frame_id.c_str(),
-    current_pose.position.x,
-    current_pose.position.y,
-    current_pose.position.z
+    target_pose.position.x,
+    target_pose.position.y,
+    target_pose.position.z
   );
 
-  RCLCPP_INFO(node->get_logger(), "Trying exact current pose IK");
+  std::vector<Target> targets = {
+    {-0.01, 0.00, 0.00, "INWARD_1CM"},
+    {-0.02, 0.00, 0.00, "INWARD_2CM"},
+    {-0.01, 0.00, -0.01, "INWARD_1CM_DOWN_1CM"},
+    {-0.02, 0.00, -0.01, "INWARD_2CM_DOWN_1CM"},
+    {0.00, 0.00, -0.01, "DOWN_1CM"}
+  };
 
-  bool ik_ok = arm.setJointValueTarget(
-    current_pose,
-    "gripper_frame_link"
-  );
+  for (const auto& target : targets) {
+    auto pose = target_pose;
 
-  if (!ik_ok) {
-    RCLCPP_ERROR(node->get_logger(), "IK failed even for exact current pose");
+    pose.position.x += target.dx;
+    pose.position.y += target.dy;
+    pose.position.z += target.dz;
+
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Trying IK target %s: x=%.3f y=%.3f z=%.3f",
+      target.name.c_str(),
+      pose.position.x,
+      pose.position.y,
+      pose.position.z
+    );
+
+    arm.clearPoseTargets();
+    arm.setStartStateToCurrentState();
+
+    bool ik_ok = arm.setJointValueTarget(
+      pose,
+      "gripper_frame_link"
+    );
+
+    if (!ik_ok) {
+      RCLCPP_WARN(node->get_logger(), "IK failed: %s", target.name.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(node->get_logger(), "IK solved: %s", target.name.c_str());
+
+    moveit::planning_interface::MoveGroupInterface::Plan plan;
+    bool plan_ok = static_cast<bool>(arm.plan(plan));
+
+    if (!plan_ok) {
+      RCLCPP_WARN(node->get_logger(), "Planning failed: %s", target.name.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(node->get_logger(), "Planning succeeded: %s", target.name.c_str());
+    RCLCPP_INFO(node->get_logger(), "Executing small IK movement: %s", target.name.c_str());
+
+    auto result = arm.execute(plan);
+
+    if (result != moveit::core::MoveItErrorCode::SUCCESS) {
+      RCLCPP_ERROR(node->get_logger(), "Execution failed: %s", target.name.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(node->get_logger(), "V3 SMALL IK MOVEMENT TEST COMPLETE: %s", target.name.c_str());
+
     rclcpp::shutdown();
     spinner.join();
-    return 1;
+    return 0;
   }
 
-  RCLCPP_INFO(node->get_logger(), "IK solved for exact current pose");
-
-  moveit::planning_interface::MoveGroupInterface::Plan plan;
-  bool plan_ok = static_cast<bool>(arm.plan(plan));
-
-  if (!plan_ok) {
-    RCLCPP_ERROR(node->get_logger(), "Planning failed after exact current pose IK");
-    rclcpp::shutdown();
-    spinner.join();
-    return 1;
-  }
-
-  RCLCPP_INFO(node->get_logger(), "Planning succeeded for exact current pose");
-  RCLCPP_INFO(node->get_logger(), "Executing exact current pose plan");
-
-  auto result = arm.execute(plan);
-
-  if (result != moveit::core::MoveItErrorCode::SUCCESS) {
-    RCLCPP_ERROR(node->get_logger(), "Execution failed for exact current pose");
-    rclcpp::shutdown();
-    spinner.join();
-    return 1;
-  }
-
-  RCLCPP_INFO(node->get_logger(), "V3 IK DIAGNOSTIC COMPLETE");
+  RCLCPP_ERROR(node->get_logger(), "All small IK movement targets failed");
 
   rclcpp::shutdown();
   spinner.join();
-
-  return 0;
+  return 1;
 }
