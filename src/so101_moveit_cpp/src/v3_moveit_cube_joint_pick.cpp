@@ -1,4 +1,5 @@
 #include <cmath>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <string>
@@ -167,12 +168,16 @@ int main(int argc, char * argv[])
 
   if (!move_to_joint_target(node, gripper, gripper_closed, "GRIPPER_CLOSE")) return 1;
   publish_state(state_pub, "GRIP_CLOSE");
+  RCLCPP_INFO(node->get_logger(), "Published GRIP_CLOSE. Waiting for cube attach...");
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 
   if (!move_to_joint_target(node, arm, lift, "LIFT")) return 1;
   if (!move_to_joint_target(node, arm, place, "PLACE")) return 1;
 
   if (!move_to_joint_target(node, gripper, gripper_open, "GRIPPER_OPEN_RELEASE")) return 1;
   publish_state(state_pub, "GRIP_OPEN");
+  RCLCPP_INFO(node->get_logger(), "Published GRIP_OPEN. Waiting for cube release...");
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 
   if (!move_to_joint_target(node, arm, home, "HOME_END")) return 1;
 
