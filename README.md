@@ -177,3 +177,77 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_moveit_cpp v3_final_moveit_pick_place.launch.py
+
+
+---
+
+## V4: Camera-Derived Cube Pose Pick-Place
+
+### Final command
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_moveit_cpp v4_camera_derived_pick_place.launch.py
+```
+
+### What this demo adds over V3
+
+V3 used a live `/pick_cube_pose`, but the cube pose was still based on a fixed known Gazebo cube position.
+
+V4 adds a camera-derived correction step.
+
+The wrist camera detects the red cube, calculates image error, and uses that error to adjust the `/pick_cube_pose` estimate before MoveIt continues the pick-place sequence.
+
+### V4 pipeline
+
+```text
+Gazebo SO101 robot
+        ↓
+wrist camera image
+        ↓
+red cube detector
+        ↓
+/camera_cube_error
+        ↓
+V4 camera-derived cube pose publisher
+        ↓
+/pick_cube_pose
+        ↓
+MoveIt shoulder pan refinement
+        ↓
+grasp, attach, lift, place, release
+```
+
+### Confirmed working behavior
+
+The V4 launch has been tested successfully with:
+
+```text
+V4 CAMERA-DERIVED /pick_cube_pose
+CAMERA ALIGNMENT PASSED
+V4 camera-derived pose after alignment
+V4 refining shoulder_pan
+PAN_REFINE_CAMERA_DERIVED
+PRE_GRASP_CAMERA_DERIVED
+CUBE ATTACHED
+CUBE LIFTED
+CUBE RELEASED TO GROUND
+V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
+```
+
+### Important note
+
+This is still not full 3D depth estimation. V4 uses a practical camera-error-based correction to refine the cube pose estimate. The cube carry behavior still uses the Gazebo attach / set-pose abstraction.
+
+### Current V4 status
+
+* Wrist camera detection: working
+* Camera error publishing: working
+* Camera-derived `/pick_cube_pose`: working
+* MoveIt pan refinement: working
+* Gripper open / close: working
+* Cube attach, lift, release: working
+* Final V4 launch: working
