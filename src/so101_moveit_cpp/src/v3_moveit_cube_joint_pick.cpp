@@ -9,6 +9,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
 
 
@@ -67,10 +68,15 @@ int main(int argc, char * argv[])
 
   bool got_cube_pose = false;
   bool object_detected = false;
+  bool got_camera_error = false;
 
   double cube_x = 0.0;
   double cube_y = 0.0;
   double cube_z = 0.0;
+
+  double camera_error_x = 9999.0;
+  double camera_error_y = 9999.0;
+  double camera_area = 0.0;
 
   auto cube_pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/pick_cube_pose",
@@ -90,6 +96,19 @@ int main(int argc, char * argv[])
     [&](const std_msgs::msg::Bool::SharedPtr msg)
     {
       object_detected = msg->data;
+    }
+  );
+
+
+  auto camera_error_sub = node->create_subscription<geometry_msgs::msg::PointStamped>(
+    "/camera_cube_error",
+    10,
+    [&](const geometry_msgs::msg::PointStamped::SharedPtr msg)
+    {
+      camera_error_x = msg->point.x;
+      camera_error_y = msg->point.y;
+      camera_area = msg->point.z;
+      got_camera_error = true;
     }
   );
 
@@ -217,25 +236,64 @@ int main(int argc, char * argv[])
   if (!move_to_joint_target(node, arm, pan_to_cube, "PAN_TOWARD_LIVE_CUBE")) return 1;
   if (!move_to_joint_target(node, arm, pre_grasp, "PRE_GRASP_CAMERA_VIEW")) return 1;
 
-  RCLCPP_INFO(node->get_logger(), "Waiting for camera detection at PRE_GRASP: /object_detected == true");
+  RCLCPP_INFO(node->get_logger(), "Waiting for camera alignment at PRE_GRASP");
+
+  const double max_error_x = 90.0;
+  const double max_error_y = 90.0;
+  const double min_area = 800.0;
+
+  RCLCPP_INFO(
+    node->get_logger(),
+    "Camera alignment thresholds: abs(error_x)<%.1f abs(error_y)<%.1f area>%.1f",
+    max_error_x,
+    max_error_y,
+    min_area
+  );
 
   auto detection_wait_start = std::chrono::steady_clock::now();
 
-  while (rclcpp::ok() && !object_detected) {
+  bool camera_aligned = false;
+
+  while (rclcpp::ok() && !camera_aligned) {
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - detection_wait_start).count();
 
     if (elapsed > 15) {
-      RCLCPP_ERROR(node->get_logger(), "Timeout waiting for /object_detected true at PRE_GRASP");
+      RCLCPP_ERROR(
+        node->get_logger(),
+        "Timeout waiting for camera alignment. object_detected=%s got_camera_error=%s error_x=%.1f error_y=%.1f area=%.1f",
+        object_detected ? "true" : "false",
+        got_camera_error ? "true" : "false",
+        camera_error_x,
+        camera_error_y,
+        camera_area
+      );
       rclcpp::shutdown();
       spinner.join();
       return 1;
     }
 
+    if (
+      object_detected &&
+      got_camera_error &&
+      std::abs(camera_error_x) < max_error_x &&
+      std::abs(camera_error_y) < max_error_y &&
+      camera_area > min_area
+    ) {
+      camera_aligned = true;
+      break;
+    }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  RCLCPP_INFO(node->get_logger(), "CAMERA GATE PASSED AT PRE_GRASP: red cube detected");
+  RCLCPP_INFO(
+    node->get_logger(),
+    "CAMERA ALIGNMENT PASSED: error_x=%.1f error_y=%.1f area=%.1f",
+    camera_error_x,
+    camera_error_y,
+    camera_area
+  );
 
   if (!move_to_joint_target(node, arm, grasp, "GRASP")) return 1;
 
@@ -256,7 +314,7 @@ int main(int argc, char * argv[])
 
   publish_state(state_pub, "IDLE");
 
-  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CAMERA-GATED PICK COMPLETE");
+  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CAMERA-ALIGNED PICK COMPLETE");
 
   rclcpp::shutdown();
   spinner.join();
