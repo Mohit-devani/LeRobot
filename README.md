@@ -177,3 +177,46 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_moveit_cpp v3_final_moveit_pick_place.launch.py
+9999
+
+---
+
+## V4: Camera-Derived Cube Pose Pick-Place
+
+### Final command
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_moveit_cpp v4_camera_derived_pick_place.launch.py
+
+Gazebo SO101 robot
+        ↓
+wrist camera image
+        ↓
+red cube detector
+        ↓
+/camera_cube_error
+        ↓
+V4 camera-derived cube pose publisher
+        ↓
+/pick_cube_pose
+        ↓
+MoveIt shoulder pan refinement
+        ↓
+grasp, attach, lift, place, release
+
+V4 CAMERA-DERIVED /pick_cube_pose
+CAMERA ALIGNMENT PASSED
+V4 camera-derived pose after alignment
+V4 refining shoulder_pan
+PAN_REFINE_CAMERA_DERIVED
+PRE_GRASP_CAMERA_DERIVED
+CUBE ATTACHED
+CUBE LIFTED
+CUBE RELEASED TO GROUND
+V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
+
+
