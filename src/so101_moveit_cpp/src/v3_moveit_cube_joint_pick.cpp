@@ -80,12 +80,12 @@ int main(int argc, char * argv[])
 
   arm.setPlanningTime(8.0);
   arm.setNumPlanningAttempts(20);
-  arm.setMaxVelocityScalingFactor(0.30);
-  arm.setMaxAccelerationScalingFactor(0.30);
+  arm.setMaxVelocityScalingFactor(0.60);
+  arm.setMaxAccelerationScalingFactor(0.60);
 
   gripper.setPlanningTime(3.0);
-  gripper.setMaxVelocityScalingFactor(0.50);
-  gripper.setMaxAccelerationScalingFactor(0.50);
+  gripper.setMaxVelocityScalingFactor(0.80);
+  gripper.setMaxAccelerationScalingFactor(0.80);
 
   RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CUBE JOINT PICK STARTED");
 
@@ -169,7 +169,7 @@ int main(int argc, char * argv[])
   if (!move_to_joint_target(node, gripper, gripper_closed, "GRIPPER_CLOSE")) return 1;
   publish_state(state_pub, "GRIP_CLOSE");
   RCLCPP_INFO(node->get_logger(), "Published GRIP_CLOSE. Waiting for cube attach...");
-  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   if (!move_to_joint_target(node, arm, lift, "LIFT")) return 1;
   if (!move_to_joint_target(node, arm, place, "PLACE")) return 1;
@@ -177,7 +177,7 @@ int main(int argc, char * argv[])
   if (!move_to_joint_target(node, gripper, gripper_open, "GRIPPER_OPEN_RELEASE")) return 1;
   publish_state(state_pub, "GRIP_OPEN");
   RCLCPP_INFO(node->get_logger(), "Published GRIP_OPEN. Waiting for cube release...");
-  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   if (!move_to_joint_target(node, arm, home, "HOME_END")) return 1;
 
