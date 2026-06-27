@@ -28,6 +28,16 @@ def generate_launch_description():
         )
     )
 
+    wrist_camera_bridge = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                gazebo_pkg,
+                "launch",
+                "wrist_camera_bridge.launch.py"
+            )
+        )
+    )
+
     clock_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -46,6 +56,16 @@ def generate_launch_description():
             "/world/so101_world/set_pose@ros_gz_interfaces/srv/SetEntityPose"
         ],
         output="screen"
+    )
+
+    wrist_detector = Node(
+        package="so101_gazebo",
+        executable="wrist_cube_center_detector.py",
+        name="wrist_cube_center_detector",
+        output="screen",
+        parameters=[
+            {"use_sim_time": True}
+        ],
     )
 
     simple_gripper_tf = Node(
@@ -106,11 +126,16 @@ def generate_launch_description():
 
         TimerAction(period=4.0, actions=[
             set_pose_bridge,
+            wrist_camera_bridge,
             simple_gripper_tf,
             cube_pose_publisher,
             cube_attach,
         ]),
 
-        TimerAction(period=5.0, actions=[move_group]),
+        TimerAction(period=7.0, actions=[wrist_detector]),
+        TimerAction(period=8.0, actions=[move_group]),
+
+        # Pick node starts after detector and controllers are alive.
+        # It still waits internally for /object_detected and /pick_cube_pose.
         TimerAction(period=18.0, actions=[cube_joint_pick]),
     ])

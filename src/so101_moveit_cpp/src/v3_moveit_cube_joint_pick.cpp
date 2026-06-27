@@ -7,6 +7,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
 
@@ -65,6 +66,8 @@ int main(int argc, char * argv[])
   );
 
   bool got_cube_pose = false;
+  bool object_detected = false;
+
   double cube_x = 0.0;
   double cube_y = 0.0;
   double cube_z = 0.0;
@@ -78,6 +81,15 @@ int main(int argc, char * argv[])
       cube_y = msg->pose.position.y;
       cube_z = msg->pose.position.z;
       got_cube_pose = true;
+    }
+  );
+
+  auto object_detected_sub = node->create_subscription<std_msgs::msg::Bool>(
+    "/object_detected",
+    10,
+    [&](const std_msgs::msg::Bool::SharedPtr msg)
+    {
+      object_detected = msg->data;
     }
   );
 
@@ -96,11 +108,11 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CUBE JOINT PICK STARTED");
   RCLCPP_INFO(node->get_logger(), "Waiting for /pick_cube_pose...");
 
-  auto wait_start = std::chrono::steady_clock::now();
+  auto pose_wait_start = std::chrono::steady_clock::now();
 
   while (rclcpp::ok() && !got_cube_pose) {
     auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - wait_start).count();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - pose_wait_start).count();
 
     if (elapsed > 8) {
       RCLCPP_ERROR(node->get_logger(), "Timeout waiting for /pick_cube_pose");
@@ -203,7 +215,28 @@ int main(int argc, char * argv[])
   if (!move_to_joint_target(node, gripper, gripper_open, "GRIPPER_OPEN")) return 1;
   if (!move_to_joint_target(node, arm, home, "HOME")) return 1;
   if (!move_to_joint_target(node, arm, pan_to_cube, "PAN_TOWARD_LIVE_CUBE")) return 1;
-  if (!move_to_joint_target(node, arm, pre_grasp, "PRE_GRASP")) return 1;
+  if (!move_to_joint_target(node, arm, pre_grasp, "PRE_GRASP_CAMERA_VIEW")) return 1;
+
+  RCLCPP_INFO(node->get_logger(), "Waiting for camera detection at PRE_GRASP: /object_detected == true");
+
+  auto detection_wait_start = std::chrono::steady_clock::now();
+
+  while (rclcpp::ok() && !object_detected) {
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - detection_wait_start).count();
+
+    if (elapsed > 15) {
+      RCLCPP_ERROR(node->get_logger(), "Timeout waiting for /object_detected true at PRE_GRASP");
+      rclcpp::shutdown();
+      spinner.join();
+      return 1;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  RCLCPP_INFO(node->get_logger(), "CAMERA GATE PASSED AT PRE_GRASP: red cube detected");
+
   if (!move_to_joint_target(node, arm, grasp, "GRASP")) return 1;
 
   if (!move_to_joint_target(node, gripper, gripper_closed, "GRIPPER_CLOSE")) return 1;
@@ -223,7 +256,7 @@ int main(int argc, char * argv[])
 
   publish_state(state_pub, "IDLE");
 
-  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT LIVE CUBE POSE PICK COMPLETE");
+  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CAMERA-GATED PICK COMPLETE");
 
   rclcpp::shutdown();
   spinner.join();
