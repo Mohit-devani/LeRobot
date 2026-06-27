@@ -166,3 +166,14 @@ source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_gazebo final_so101_gazebo_pick_place.launch.py
 ```
+
+## V3: MoveIt + Wrist Camera + Gazebo Pick-Place
+
+### Final command
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_moveit_cpp v3_final_moveit_pick_place.launch.py
