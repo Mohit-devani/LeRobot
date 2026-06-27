@@ -29,6 +29,7 @@ install(PROGRAMS
   scripts/wrist_cube_center_detector.py
   scripts/gazebo_cube_dynamic_attach.py
   scripts/dynamic_gazebo_cube_pose_publisher.py
+  scripts/v4_camera_cube_pose_publisher.py
 DESTINATION lib/${PROJECT_NAME}
 )
 
