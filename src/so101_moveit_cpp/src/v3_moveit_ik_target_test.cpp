@@ -1,19 +1,138 @@
+#include <cmath>
+#include <map>
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
-#include <string>
 
 #include <rclcpp/rclcpp.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
 
 
-struct Target
+struct PositionTarget
 {
   double dx;
   double dy;
   double dz;
   std::string name;
 };
+
+
+bool move_to_joint_target(
+  rclcpp::Node::SharedPtr node,
+  moveit::planning_interface::MoveGroupInterface& arm,
+  const std::map<std::string, double>& target,
+  const std::string& name)
+{
+  RCLCPP_INFO(node->get_logger(), "Planning joint target: %s", name.c_str());
+
+  arm.clearPoseTargets();
+  arm.setStartStateToCurrentState();
+  arm.setJointValueTarget(target);
+
+  moveit::planning_interface::MoveGroupInterface::Plan plan;
+  bool plan_ok = static_cast<bool>(arm.plan(plan));
+
+  if (!plan_ok) {
+    RCLCPP_ERROR(node->get_logger(), "Joint planning failed: %s", name.c_str());
+    return false;
+  }
+
+  RCLCPP_INFO(node->get_logger(), "Executing joint target: %s", name.c_str());
+
+  auto result = arm.execute(plan);
+
+  if (result != moveit::core::MoveItErrorCode::SUCCESS) {
+    RCLCPP_ERROR(node->get_logger(), "Joint execution failed: %s", name.c_str());
+    return false;
+  }
+
+  RCLCPP_INFO(node->get_logger(), "Reached joint target: %s", name.c_str());
+  return true;
+}
+
+
+bool move_position_only_ik_after_pan(
+  rclcpp::Node::SharedPtr node,
+  moveit::planning_interface::MoveGroupInterface& arm)
+{
+  arm.clearPoseTargets();
+  arm.setStartStateToCurrentState();
+
+  auto current_pose_stamped = arm.getCurrentPose("gripper_frame_link");
+  auto current_pose = current_pose_stamped.pose;
+
+  RCLCPP_INFO(
+    node->get_logger(),
+    "Current pose after pan: x=%.3f y=%.3f z=%.3f",
+    current_pose.position.x,
+    current_pose.position.y,
+    current_pose.position.z
+  );
+
+  std::vector<PositionTarget> targets = {
+    {-0.01, 0.00, 0.00, "POSITION_ONLY_INWARD_1CM"},
+    {-0.02, 0.00, 0.00, "POSITION_ONLY_INWARD_2CM"},
+    {-0.03, 0.00, 0.00, "POSITION_ONLY_INWARD_3CM"},
+    {-0.01, 0.00, -0.01, "POSITION_ONLY_INWARD_1CM_DOWN_1CM"},
+    {-0.02, 0.00, -0.01, "POSITION_ONLY_INWARD_2CM_DOWN_1CM"},
+    {0.00, 0.00, -0.01, "POSITION_ONLY_DOWN_1CM"}
+  };
+
+  for (const auto& target : targets) {
+    double x = current_pose.position.x + target.dx;
+    double y = current_pose.position.y + target.dy;
+    double z = current_pose.position.z + target.dz;
+
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Trying position-only IK target %s: x=%.3f y=%.3f z=%.3f",
+      target.name.c_str(),
+      x,
+      y,
+      z
+    );
+
+    arm.clearPoseTargets();
+    arm.setStartStateToCurrentState();
+
+    bool target_ok = arm.setPositionTarget(
+      x,
+      y,
+      z,
+      "gripper_frame_link"
+    );
+
+    if (!target_ok) {
+      RCLCPP_WARN(node->get_logger(), "setPositionTarget failed: %s", target.name.c_str());
+      continue;
+    }
+
+    moveit::planning_interface::MoveGroupInterface::Plan plan;
+    bool plan_ok = static_cast<bool>(arm.plan(plan));
+
+    if (!plan_ok) {
+      RCLCPP_WARN(node->get_logger(), "Position-only IK planning failed: %s", target.name.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(node->get_logger(), "Position-only IK planning succeeded: %s", target.name.c_str());
+    RCLCPP_INFO(node->get_logger(), "Executing position-only IK target: %s", target.name.c_str());
+
+    auto result = arm.execute(plan);
+
+    if (result != moveit::core::MoveItErrorCode::SUCCESS) {
+      RCLCPP_ERROR(node->get_logger(), "Position-only IK execution failed: %s", target.name.c_str());
+      continue;
+    }
+
+    RCLCPP_INFO(node->get_logger(), "Position-only IK reached: %s", target.name.c_str());
+    return true;
+  }
+
+  RCLCPP_ERROR(node->get_logger(), "All position-only IK targets failed");
+  return false;
+}
 
 
 int main(int argc, char * argv[])
@@ -38,97 +157,61 @@ int main(int argc, char * argv[])
   arm.setPoseReferenceFrame("base_link");
   arm.setPlanningTime(8.0);
   arm.setNumPlanningAttempts(20);
-  arm.setMaxVelocityScalingFactor(0.10);
-  arm.setMaxAccelerationScalingFactor(0.10);
-  arm.setGoalPositionTolerance(0.03);
-  arm.setGoalOrientationTolerance(0.30);
+  arm.setMaxVelocityScalingFactor(0.15);
+  arm.setMaxAccelerationScalingFactor(0.15);
+  arm.setGoalPositionTolerance(0.04);
+  arm.setGoalOrientationTolerance(1.57);
 
-  RCLCPP_INFO(node->get_logger(), "V3 SMALL IK MOVEMENT TEST STARTED");
-  RCLCPP_INFO(node->get_logger(), "Planning frame: %s", arm.getPlanningFrame().c_str());
-  RCLCPP_INFO(node->get_logger(), "Pose reference frame: %s", arm.getPoseReferenceFrame().c_str());
-  RCLCPP_INFO(node->get_logger(), "End effector link: %s", arm.getEndEffectorLink().c_str());
+  RCLCPP_INFO(node->get_logger(), "V3 PAN PLUS POSITION-ONLY IK TEST STARTED");
 
-  arm.setStartStateToCurrentState();
+  double cube_x = 0.32;
+  double cube_y = 0.10;
 
-  auto current_pose_stamped = arm.getCurrentPose("gripper_frame_link");
-  auto target_pose = current_pose_stamped.pose;
+  double pan = -std::atan2(cube_y, cube_x);
 
   RCLCPP_INFO(
     node->get_logger(),
-    "Current pose frame=%s x=%.3f y=%.3f z=%.3f",
-    current_pose_stamped.header.frame_id.c_str(),
-    target_pose.position.x,
-    target_pose.position.y,
-    target_pose.position.z
+    "Cube estimate x=%.3f y=%.3f -> shoulder_pan=%.3f",
+    cube_x,
+    cube_y,
+    pan
   );
 
-  std::vector<Target> targets = {
-    {-0.01, 0.00, 0.00, "INWARD_1CM"},
-    {-0.02, 0.00, 0.00, "INWARD_2CM"},
-    {-0.01, 0.00, -0.01, "INWARD_1CM_DOWN_1CM"},
-    {-0.02, 0.00, -0.01, "INWARD_2CM_DOWN_1CM"},
-    {0.00, 0.00, -0.01, "DOWN_1CM"}
+  std::map<std::string, double> pan_to_cube = {
+    {"shoulder_pan", pan},
+    {"shoulder_lift", 0.0},
+    {"elbow_flex", 0.0},
+    {"wrist_flex", 0.0},
+    {"wrist_roll", 0.0}
   };
 
-  for (const auto& target : targets) {
-    auto pose = target_pose;
+  bool pan_ok = move_to_joint_target(
+    node,
+    arm,
+    pan_to_cube,
+    "PAN_TOWARD_CUBE"
+  );
 
-    pose.position.x += target.dx;
-    pose.position.y += target.dy;
-    pose.position.z += target.dz;
-
-    RCLCPP_INFO(
-      node->get_logger(),
-      "Trying IK target %s: x=%.3f y=%.3f z=%.3f",
-      target.name.c_str(),
-      pose.position.x,
-      pose.position.y,
-      pose.position.z
-    );
-
-    arm.clearPoseTargets();
-    arm.setStartStateToCurrentState();
-
-    bool ik_ok = arm.setJointValueTarget(
-      pose,
-      "gripper_frame_link"
-    );
-
-    if (!ik_ok) {
-      RCLCPP_WARN(node->get_logger(), "IK failed: %s", target.name.c_str());
-      continue;
-    }
-
-    RCLCPP_INFO(node->get_logger(), "IK solved: %s", target.name.c_str());
-
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    bool plan_ok = static_cast<bool>(arm.plan(plan));
-
-    if (!plan_ok) {
-      RCLCPP_WARN(node->get_logger(), "Planning failed: %s", target.name.c_str());
-      continue;
-    }
-
-    RCLCPP_INFO(node->get_logger(), "Planning succeeded: %s", target.name.c_str());
-    RCLCPP_INFO(node->get_logger(), "Executing small IK movement: %s", target.name.c_str());
-
-    auto result = arm.execute(plan);
-
-    if (result != moveit::core::MoveItErrorCode::SUCCESS) {
-      RCLCPP_ERROR(node->get_logger(), "Execution failed: %s", target.name.c_str());
-      continue;
-    }
-
-    RCLCPP_INFO(node->get_logger(), "V3 SMALL IK MOVEMENT TEST COMPLETE: %s", target.name.c_str());
-
+  if (!pan_ok) {
+    RCLCPP_ERROR(node->get_logger(), "PAN_TOWARD_CUBE failed");
     rclcpp::shutdown();
     spinner.join();
-    return 0;
+    return 1;
   }
 
-  RCLCPP_ERROR(node->get_logger(), "All small IK movement targets failed");
+  bool position_ik_ok = move_position_only_ik_after_pan(node, arm);
+
+  if (!position_ik_ok) {
+    RCLCPP_ERROR(node->get_logger(), "PAN_PLUS_POSITION_ONLY_IK failed");
+    rclcpp::shutdown();
+    spinner.join();
+    return 1;
+  }
+
+  RCLCPP_INFO(node->get_logger(), "V3 PAN PLUS POSITION-ONLY IK TEST COMPLETE");
 
   rclcpp::shutdown();
   spinner.join();
-  return 1;
+
+  return 0;
 }
