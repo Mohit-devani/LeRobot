@@ -177,7 +177,7 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_moveit_cpp v3_final_moveit_pick_place.launch.py
-9999
+```
 
 ---
 
@@ -191,7 +191,7 @@ source /opt/ros/jazzy/setup.bash
 source ~/ros2_ws/install/setup.bash
 
 ros2 launch so101_moveit_cpp v4_camera_derived_pick_place.launch.py
-
+```
 Gazebo SO101 robot
         ↓
 wrist camera image
