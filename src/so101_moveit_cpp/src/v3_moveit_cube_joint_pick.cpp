@@ -1,5 +1,5 @@
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <string>
@@ -7,6 +7,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.hpp>
 
 
@@ -63,6 +64,23 @@ int main(int argc, char * argv[])
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)
   );
 
+  bool got_cube_pose = false;
+  double cube_x = 0.0;
+  double cube_y = 0.0;
+  double cube_z = 0.0;
+
+  auto cube_pose_sub = node->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "/pick_cube_pose",
+    10,
+    [&](const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+    {
+      cube_x = msg->pose.position.x;
+      cube_y = msg->pose.position.y;
+      cube_z = msg->pose.position.z;
+      got_cube_pose = true;
+    }
+  );
+
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node);
 
@@ -73,6 +91,33 @@ int main(int argc, char * argv[])
   auto state_pub = node->create_publisher<std_msgs::msg::String>(
     "/pick_place_state",
     10
+  );
+
+  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CUBE JOINT PICK STARTED");
+  RCLCPP_INFO(node->get_logger(), "Waiting for /pick_cube_pose...");
+
+  auto wait_start = std::chrono::steady_clock::now();
+
+  while (rclcpp::ok() && !got_cube_pose) {
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - wait_start).count();
+
+    if (elapsed > 8) {
+      RCLCPP_ERROR(node->get_logger(), "Timeout waiting for /pick_cube_pose");
+      rclcpp::shutdown();
+      spinner.join();
+      return 1;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  RCLCPP_INFO(
+    node->get_logger(),
+    "Received /pick_cube_pose: x=%.3f y=%.3f z=%.3f",
+    cube_x,
+    cube_y,
+    cube_z
   );
 
   moveit::planning_interface::MoveGroupInterface arm(node, "arm");
@@ -87,16 +132,11 @@ int main(int argc, char * argv[])
   gripper.setMaxVelocityScalingFactor(0.80);
   gripper.setMaxAccelerationScalingFactor(0.80);
 
-  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CUBE JOINT PICK STARTED");
-
-  double cube_x = 0.32;
-  double cube_y = 0.10;
-
   double pan = -std::atan2(cube_y, cube_x);
 
   RCLCPP_INFO(
     node->get_logger(),
-    "Cube estimate x=%.3f y=%.3f -> shoulder_pan=%.3f",
+    "Live cube pose x=%.3f y=%.3f -> shoulder_pan=%.3f",
     cube_x,
     cube_y,
     pan
@@ -162,7 +202,7 @@ int main(int argc, char * argv[])
 
   if (!move_to_joint_target(node, gripper, gripper_open, "GRIPPER_OPEN")) return 1;
   if (!move_to_joint_target(node, arm, home, "HOME")) return 1;
-  if (!move_to_joint_target(node, arm, pan_to_cube, "PAN_TOWARD_CUBE")) return 1;
+  if (!move_to_joint_target(node, arm, pan_to_cube, "PAN_TOWARD_LIVE_CUBE")) return 1;
   if (!move_to_joint_target(node, arm, pre_grasp, "PRE_GRASP")) return 1;
   if (!move_to_joint_target(node, arm, grasp, "GRASP")) return 1;
 
@@ -183,7 +223,7 @@ int main(int argc, char * argv[])
 
   publish_state(state_pub, "IDLE");
 
-  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT CUBE JOINT PICK COMPLETE");
+  RCLCPP_INFO(node->get_logger(), "V3 MOVEIT LIVE CUBE POSE PICK COMPLETE");
 
   rclcpp::shutdown();
   spinner.join();
