@@ -81,7 +81,7 @@ class WristCubeCenterDetector(Node):
             self.detected_pub.publish(detected_msg)
             cv2.putText(
                 bgr,
-                "NO OBJECT",
+                "SEARCHING RED TARGET",
                 (30, 60),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.3,
@@ -99,7 +99,7 @@ class WristCubeCenterDetector(Node):
             self.detected_pub.publish(detected_msg)
             cv2.putText(
                 bgr,
-                "NO OBJECT",
+                "SEARCHING RED TARGET",
                 (30, 60),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.3,
@@ -147,7 +147,7 @@ class WristCubeCenterDetector(Node):
 
         cv2.putText(
             bgr,
-            f"RED CUBE cx={int(cx)} cy={int(cy)}",
+            f"RED TARGET cx={int(cx)} cy={int(cy)}",
             (30, 60),
             cv2.FONT_HERSHEY_SIMPLEX,
             1.0,

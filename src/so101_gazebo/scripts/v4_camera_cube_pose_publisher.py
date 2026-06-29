@@ -60,8 +60,8 @@ class V4CameraCubePosePublisher(Node):
 
         self.timer = self.create_timer(0.10, self.publish_pose)
 
-        self.get_logger().info("V4 camera-derived cube pose publisher started")
-        self.get_logger().info("Publishing /pick_cube_pose from camera error when available")
+        self.get_logger().info("V9 red target pose publisher started")
+        self.get_logger().info("Publishing V9 red target pose from wrist camera")
         self.get_logger().info(
             f"Seed pose: x={self.seed_x:.3f}, y={self.seed_y:.3f}, z={self.seed_z:.3f}"
         )
@@ -110,7 +110,7 @@ class V4CameraCubePosePublisher(Node):
 
             if self.object_detected and self.area > self.min_area:
                 self.get_logger().info(
-                    f"V4 CAMERA-DERIVED /pick_cube_pose: "
+                    f"V9 RED TARGET POSE /pick_cube_pose: "
                     f"x={self.cube_x:.3f}, y={self.cube_y:.3f}, z={self.cube_z:.3f}, "
                     f"error_x={self.error_x:.1f}, error_y={self.error_y:.1f}, area={self.area:.1f}"
                 )

@@ -28,7 +28,7 @@ class V5RandomCubePositioner(Node):
         self.done = False
         self.timer = self.create_timer(1.0, self.move_cube_once)
 
-        self.get_logger().info("V5 cube positioner started")
+        self.get_logger().info("V9 red target positioner started")
         self.get_logger().info("Allowed cube_position: RANDOM / LEFT / CENTER / RIGHT")
         self.get_logger().info(f"Requested cube_position: {self.cube_position}")
 
@@ -74,7 +74,7 @@ class V5RandomCubePositioner(Node):
         req.pose.orientation.w = 1.0
 
         self.get_logger().info(
-            f"V5 CUBE POSITION SELECTED: {label} x={x:.3f} y={y:.3f} z={z:.3f}"
+            f"V9 RED TARGET POSITION SELECTED: {label} x={x:.3f} y={y:.3f} z={z:.3f}"
         )
 
         future = self.set_pose_client.call_async(req)
@@ -85,10 +85,10 @@ class V5RandomCubePositioner(Node):
     def done_callback(self, future):
         try:
             result = future.result()
-            self.get_logger().info(f"V5 CUBE MOVE SERVICE RESULT: {result}")
-            self.get_logger().info("V5 CUBE POSITIONING COMPLETE")
+            self.get_logger().info(f"V9 RED TARGET MOVE SERVICE RESULT: {result}")
+            self.get_logger().info("V9 RED TARGET POSITIONING COMPLETE")
         except Exception as e:
-            self.get_logger().error(f"V5 cube positioning failed: {e}")
+            self.get_logger().error(f"V9 red target positioning failed: {e}")
 
 
 def main(args=None):
