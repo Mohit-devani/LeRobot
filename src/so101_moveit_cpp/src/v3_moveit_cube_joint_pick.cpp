@@ -295,14 +295,14 @@ int main(int argc, char * argv[])
     camera_area
   );
 
-  // Give V4 camera-derived pose publisher time to update /pick_cube_pose.
+  // Give V9 red target pose publisher time to update /pick_cube_pose.
   std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   double camera_pan = -std::atan2(cube_y, cube_x);
 
   RCLCPP_INFO(
     node->get_logger(),
-    "V4 camera-derived pose after alignment: x=%.3f y=%.3f z=%.3f -> shoulder_pan=%.3f",
+    "V9 red target pose after alignment: x=%.3f y=%.3f z=%.3f -> shoulder_pan=%.3f",
     cube_x,
     cube_y,
     cube_z,
@@ -312,7 +312,7 @@ int main(int argc, char * argv[])
   if (std::abs(camera_pan - pan) > 0.02) {
     RCLCPP_INFO(
       node->get_logger(),
-      "V4 refining shoulder_pan from %.3f to %.3f",
+      "V9 refining shoulder_pan from %.3f to %.3f",
       pan,
       camera_pan
     );
@@ -327,7 +327,7 @@ int main(int argc, char * argv[])
     if (!move_to_joint_target(node, arm, pan_to_cube, "PAN_REFINE_CAMERA_DERIVED")) return 1;
     if (!move_to_joint_target(node, arm, pre_grasp, "PRE_GRASP_CAMERA_DERIVED")) return 1;
   } else {
-    RCLCPP_INFO(node->get_logger(), "V4 camera-derived pan close enough. No pan refinement needed.");
+    RCLCPP_INFO(node->get_logger(), "V9 red target pan close enough. No pan refinement needed.");
   }
 
   if (!move_to_joint_target(node, arm, grasp, "GRASP")) return 1;
@@ -349,7 +349,7 @@ int main(int argc, char * argv[])
 
   publish_state(state_pub, "IDLE");
 
-  RCLCPP_INFO(node->get_logger(), "V4 MOVEIT CAMERA-DERIVED PICK COMPLETE");
+  RCLCPP_INFO(node->get_logger(), "V9 RED TARGET PICK AND DROP COMPLETE");
 
   rclcpp::shutdown();
   spinner.join();
