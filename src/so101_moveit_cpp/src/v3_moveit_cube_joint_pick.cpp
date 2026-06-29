@@ -238,8 +238,8 @@ int main(int argc, char * argv[])
 
   RCLCPP_INFO(node->get_logger(), "Waiting for camera alignment at PRE_GRASP");
 
-  const double max_error_x = 90.0;
-  const double max_error_y = 90.0;
+  const double max_error_x = 180.0;
+  const double max_error_y = 130.0;
   const double min_area = 800.0;
 
   RCLCPP_INFO(

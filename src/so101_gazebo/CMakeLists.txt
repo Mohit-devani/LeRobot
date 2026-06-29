@@ -30,6 +30,7 @@ install(PROGRAMS
   scripts/gazebo_cube_dynamic_attach.py
   scripts/dynamic_gazebo_cube_pose_publisher.py
   scripts/v4_camera_cube_pose_publisher.py
+  scripts/v5_random_cube_positioner.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -220,3 +220,105 @@ CUBE RELEASED TO GROUND
 V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
 
 
+---
+
+## V5: Random Cube Position Pick Demo
+
+### Final command
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_moveit_cpp v5_random_cube_position_pick.launch.py cube_position:=RANDOM
+```
+
+### Manual test commands
+
+Run LEFT cube position:
+
+```bash
+ros2 launch so101_moveit_cpp v5_random_cube_position_pick.launch.py cube_position:=LEFT
+```
+
+Run CENTER cube position:
+
+```bash
+ros2 launch so101_moveit_cpp v5_random_cube_position_pick.launch.py cube_position:=CENTER
+```
+
+Run RIGHT cube position:
+
+```bash
+ros2 launch so101_moveit_cpp v5_random_cube_position_pick.launch.py cube_position:=RIGHT
+```
+
+Run RANDOM cube position:
+
+```bash
+ros2 launch so101_moveit_cpp v5_random_cube_position_pick.launch.py cube_position:=RANDOM
+```
+
+### What this demo adds over V4
+
+V4 used camera-derived cube pose correction, but the cube still started from the same position most of the time.
+
+V5 adds visible cube position variation.
+
+The cube can now start from LEFT, CENTER, RIGHT, or RANDOM positions. The robot uses camera detection and MoveIt shoulder-pan refinement to adapt to the cube position.
+
+### V5 pipeline
+
+```text
+Gazebo cube position selector
+        ↓
+LEFT / CENTER / RIGHT / RANDOM cube pose
+        ↓
+wrist camera detects red cube
+        ↓
+/camera_cube_error
+        ↓
+camera-derived /pick_cube_pose
+        ↓
+MoveIt shoulder_pan refinement
+        ↓
+grasp, attach, lift, place, release
+```
+
+### Confirmed working behavior
+
+V5 has been tested successfully with:
+
+```text
+V5 CUBE POSITION SELECTED: LEFT
+CAMERA ALIGNMENT PASSED
+V4 refining shoulder_pan from -0.303 to -0.231
+CUBE ATTACHED
+CUBE LIFTED
+CUBE RELEASED TO GROUND
+V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
+```
+
+And:
+
+```text
+V5 CUBE POSITION SELECTED: RIGHT
+CAMERA ALIGNMENT PASSED
+V4 refining shoulder_pan from -0.303 to -0.412
+CUBE ATTACHED
+CUBE LIFTED
+CUBE RELEASED TO GROUND
+V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
+```
+
+### Current V5 status
+
+* LEFT cube position: working
+* CENTER cube position: working
+* RIGHT cube position: working
+* RANDOM cube position: working
+* Wrist camera detection: working
+* Camera-derived pose correction: working
+* MoveIt pan refinement: working
+* Cube attach, lift, release: working
