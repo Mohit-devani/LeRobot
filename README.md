@@ -322,3 +322,101 @@ V4 MOVEIT CAMERA-DERIVED PICK COMPLETE
 * Camera-derived pose correction: working
 * MoveIt pan refinement: working
 * Cube attach, lift, release: working
+
+---
+
+## Final Demo: SO101 Red Target Pick and Drop
+
+This is the final Gazebo and MoveIt demo checkpoint.
+
+The robot uses a wrist camera to detect the red target cube, ignores blue and green distractor cubes, picks the red cube, lifts it, and drops it on the black drop-zone pad.
+
+### Final launch command
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch so101_moveit_cpp v10_final_demo.launch.py cube_position:=RANDOM
+```
+
+### Manual test commands
+
+Run the red cube at LEFT:
+
+```bash
+ros2 launch so101_moveit_cpp v10_final_demo.launch.py cube_position:=LEFT
+```
+
+Run the red cube at CENTER:
+
+```bash
+ros2 launch so101_moveit_cpp v10_final_demo.launch.py cube_position:=CENTER
+```
+
+Run the red cube at RIGHT:
+
+```bash
+ros2 launch so101_moveit_cpp v10_final_demo.launch.py cube_position:=RIGHT
+```
+
+Run random red cube position:
+
+```bash
+ros2 launch so101_moveit_cpp v10_final_demo.launch.py cube_position:=RANDOM
+```
+
+### What the final demo shows
+
+```text
+Gazebo world starts
+Robot spawns
+Red target cube starts at LEFT, CENTER, RIGHT, or RANDOM
+Blue and green cubes stay as distractors
+Wrist camera searches for the red target
+Detector publishes red target center error
+Camera-derived target pose is published
+MoveIt refines shoulder pan
+Robot moves to pre-grasp
+Cube attaches to gripper
+Robot lifts the cube
+Robot moves to drop area
+Cube releases onto the black drop-zone pad
+```
+
+### Expected success logs
+
+```text
+V9 RED TARGET POSITION SELECTED
+V9 RED TARGET MOVE SERVICE RESULT: success=True
+CAMERA ALIGNMENT PASSED
+V9 red target pose after alignment
+V9 refining shoulder_pan
+CUBE ATTACHED
+CUBE LIFTED
+CUBE RELEASED
+V9 RED TARGET PICK AND DROP COMPLETE
+```
+
+### Known warnings that can be ignored
+
+These warnings may appear during the demo and are not blockers if the final success log appears:
+
+```text
+No 3D sensor plugin(s) defined for octomap updates
+No state update received within 100ms of system clock
+```
+
+### Final working status
+
+* Gazebo robot visible: working
+* MoveIt robot motion: working
+* Wrist camera stream: working
+* Red target detection: working
+* Blue and green distractor cubes: working
+* Random red cube position: working
+* Camera-derived pose correction: working
+* Gripper attach and release: working
+* Black drop-zone pad: working
+* Final pick and drop sequence: working
